@@ -34,7 +34,6 @@ const client_test_t test_i026_client_tests_list[] = {
 int32_t client_test_psa_call_with_iovec_more_than_max_limit(caller_security_t caller)
 {
    int32_t            status = VAL_STATUS_SUCCESS;
-   psa_handle_t       handle = 0;
    uint8_t            data = 0x11;
    psa_status_t       status_of_call;
    boot_state_t       boot_state;
@@ -70,12 +69,15 @@ int32_t client_test_psa_call_with_iovec_more_than_max_limit(caller_security_t ca
     * VAL APIs to decide test status.
     */
 
+#if STATELESS_ROT != 1
+   psa_handle_t       handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
        val->print(PRINT_ERROR, "\tConnection failed\n", 0);
        return VAL_STATUS_INVALID_HANDLE;
    }
+#endif
 
    /* Setting boot.state before test check */
    boot_state = (caller == CALLER_NONSECURE) ? BOOT_EXPECTED_NS : BOOT_EXPECTED_S;
@@ -86,7 +88,12 @@ int32_t client_test_psa_call_with_iovec_more_than_max_limit(caller_security_t ca
    }
 
    /* Test check- psa_call with IOVEC > PSA_MAX_IOVEC */
+
+#if STATELESS_ROT == 1
+   status_of_call =  psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, invec, PSA_MAX_IOVEC, outvec, 1);
+#else
    status_of_call =  psa->call(handle, PSA_IPC_CALL, invec, PSA_MAX_IOVEC, outvec, 1);
+#endif
 
    /*
     * If the caller is in the NSPE, it is IMPLEMENTATION DEFINED whether
@@ -95,7 +102,9 @@ int32_t client_test_psa_call_with_iovec_more_than_max_limit(caller_security_t ca
     */
    if (caller == CALLER_NONSECURE && status_of_call == PSA_ERROR_PROGRAMMER_ERROR)
    {
+#if STATELESS_ROT != 1
        psa->close(handle);
+#endif
        return VAL_STATUS_SUCCESS;
    }
 
@@ -110,6 +119,8 @@ int32_t client_test_psa_call_with_iovec_more_than_max_limit(caller_security_t ca
    }
 
    status = VAL_STATUS_SPM_FAILED;
+#if STATELESS_ROT != 1
    psa->close(handle);
+#endif
    return status;
 }

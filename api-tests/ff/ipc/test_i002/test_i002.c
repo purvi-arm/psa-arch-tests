@@ -321,3 +321,4 @@ int32_t client_test_psa_poll_behave(caller_security_t caller __UNUSED)
    val->print(PRINT_TEST, "[Check 9] Test PSA_POLL\n", 0);
    return (client_test_psa_wait());
 }
+

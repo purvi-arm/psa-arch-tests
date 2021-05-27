@@ -58,6 +58,7 @@ int32_t server_test_psa_skip_with_null_handle(void)
     * VAL APIs to decide test status.
     */
 
+#if STATELESS_ROT != 1
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(201), status))
     {
@@ -66,6 +67,7 @@ int32_t server_test_psa_skip_with_null_handle(void)
     }
 
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     status = val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(202), status))
@@ -79,7 +81,8 @@ int32_t server_test_psa_skip_with_null_handle(void)
         if (val->err_check_set(TEST_CHECKPOINT_NUM(203), status))
         {
             val->print(PRINT_ERROR, "\tFailed to set boot flag before check\n", 0);
-            psa->reply(msg.handle, -3);
+            //psa->reply(msg.handle, -3);
+            psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
         }
         else
         {
@@ -102,8 +105,10 @@ int32_t server_test_psa_skip_with_null_handle(void)
     }
 
     val->err_check_set(TEST_CHECKPOINT_NUM(204), status);
+#if STATELESS_ROT != 1
     status = ((val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
                ? VAL_STATUS_ERROR : status);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
     return status;
 }

@@ -131,6 +131,12 @@ else()
 list(APPEND PLATFORM_PSA_ISOLATION_LEVEL_OPTIONS 1 2 3)
 endif()
 
+
+#list of values available for connection based
+if(${SUITE} STREQUAL "IPC")
+list(APPEND PSA_STATELESS_ROT 0 1)
+endif()
+
 message(STATUS "[PSA] : ----------Process input arguments- start-------------")
 
 # Check for TARGET command line argument
@@ -182,9 +188,9 @@ endif()
 set(PSA_TARGET_PAL_NSPE_LIB		pal_nspe)
 set(PSA_TARGET_VAL_NSPE_LIB		val_nspe)
 set(PSA_TARGET_TEST_COMBINE_LIB		test_combine)
-set(PSA_TARGET_DRIVER_PARTITION_LIB	driver_partition)
-set(PSA_TARGET_CLIENT_PARTITION_LIB	client_partition)
-set(PSA_TARGET_SERVER_PARTITION_LIB	server_partition)
+set(PSA_TARGET_DRIVER_PARTITION_LIB	tfm_psa_rot_partition_driver_partition)
+set(PSA_TARGET_CLIENT_PARTITION_LIB	tfm_app_rot_partition_client_partition)
+set(PSA_TARGET_SERVER_PARTITION_LIB	tfm_app_rot_partition_server_partition)
 if(${SUITE} STREQUAL "IPC")
 	set(PSA_SUITE_DIR		${PSA_ROOT_DIR}/ff/${SUITE_LOWER})
 	set(PSA_SUITE_OUT_DIR		${CMAKE_CURRENT_BINARY_DIR}/ff/${SUITE_LOWER})
@@ -207,6 +213,12 @@ if(${SUITE} STREQUAL "INTERNAL_TRUSTED_STORAGE")
 	set(TESTSUITE_DB			${PSA_SUITE_DIR}/its_testsuite.db)
 elseif((${SUITE} STREQUAL "PROTECTED_STORAGE") OR (${SUITE} STREQUAL "STORAGE"))
 	set(TESTSUITE_DB			${PSA_SUITE_DIR}/ps_testsuite.db)
+elseif(${SUITE} STREQUAL "IPC")
+	if(DEFINED STATELESS_ROT)
+		set(TESTSUITE_DB                        ${PSA_SUITE_DIR}/stateless_rot_testsuite.db)
+	else()
+		set(TESTSUITE_DB                        ${PSA_SUITE_DIR}/testsuite.db)
+	endif()
 else()
 	set(TESTSUITE_DB			${PSA_SUITE_DIR}/testsuite.db)
 endif()
@@ -344,6 +356,20 @@ else()
 		message(STATUS "[PSA] : Testing ${SUITE_TEST_RANGE_MIN} of ${SUITE} suite")
 	endif()
 endif()
+
+
+if(DEFINED STATELESS_ROT)
+	add_definitions(-DSTATELESS_ROT)
+	if(NOT ${STATELESS_ROT} IN_LIST PSA_STATELESS_ROT)
+		message(FATAL_ERROR "[PSA] : Error: Unsupported value for -DSTATELESS_ROT=${STATELESS_ROT}, supported values are : ${PSA_STATELESS_ROT}")
+	elseif(${STATELESS_ROT} EQUAL 1)
+		message(STATUS "[PSA] : Testing ${SUITE} for stateless rot")
+	elseif(${STATELESS_ROT} STREQUAL "FALSE")
+		message(STATUS "[PSA] : Testing ${SUITE} for connection based")
+	endif()
+endif()
+		
+	
 
 message(STATUS "[PSA] : ----------Process input arguments- complete-------------")
 

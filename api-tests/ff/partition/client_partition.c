@@ -97,11 +97,13 @@ void client_main(void)
         /* Server_partition requests client to connect to SERVER_SECURE_CONNECT_ONLY_SID */
         else if (signals & PSA_DOORBELL)
         {
+#if STATELESS_ROT != 1
             if (psa_connect(SERVER_SECURE_CONNECT_ONLY_SID, SERVER_SECURE_CONNECT_ONLY_VERSION)
                 != PSA_ERROR_CONNECTION_REFUSED)
             {
                val_print(PRINT_ERROR, "psa_connect failed \n", 0);
             }
+#endif
             psa_clear();
         }
         else

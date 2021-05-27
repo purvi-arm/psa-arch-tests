@@ -34,7 +34,7 @@ const client_test_t test_i054_client_tests_list[] = {
 int32_t client_test_psa_call_with_not_writable_outvec_base(caller_security_t caller __UNUSED)
 {
    int32_t                 status = VAL_STATUS_SUCCESS;
-   psa_handle_t            handle = 0;
+
 
    val->print(PRINT_TEST,
             "[Check 1] Test psa_call with not writable psa_outvec.base\n", 0);
@@ -61,12 +61,15 @@ int32_t client_test_psa_call_with_not_writable_outvec_base(caller_security_t cal
     * VAL APIs to decide test status.
     */
 
+#if STATELESS_ROT != 1
+   psa_handle_t            handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
        val->print(PRINT_ERROR, "\tConnection failed\n", 0);
        return VAL_STATUS_INVALID_HANDLE;
    }
+#endif
 
    /* Setting boot.state before test check */
    if (val->set_boot_flag(BOOT_EXPECTED_S))
@@ -79,7 +82,11 @@ int32_t client_test_psa_call_with_not_writable_outvec_base(caller_security_t cal
    psa_outvec outvec[1] = {{&client_test_psa_call_with_not_writable_outvec_base, sizeof(char)}};
 
    /* Test check- psa_call with not writable psa_outvec.base, call should panic */
+#if STATELESS_ROT == 1
+   psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, NULL, 0, outvec, 1);
+#else
    psa->call(handle, PSA_IPC_CALL, NULL, 0, outvec, 1);
+#endif
 
    /* If PROGRAMMER ERROR results into panic then control shouldn't have reached here */
    val->print(PRINT_ERROR, "\tpsa_call should failed but succeed\n", 0);
@@ -92,6 +99,8 @@ int32_t client_test_psa_call_with_not_writable_outvec_base(caller_security_t cal
    }
 
    status = VAL_STATUS_SPM_FAILED;
-   psa->close(handle);
+#if STATELESS_ROT != 1
+       psa->close(handle);
+#endif
    return status;
 }

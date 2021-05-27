@@ -420,3 +420,4 @@ int32_t server_test_psa_poll_behave(void)
     }
     return VAL_STATUS_SUCCESS;
 }
+

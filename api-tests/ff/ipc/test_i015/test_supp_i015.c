@@ -67,6 +67,7 @@ int32_t server_test_psa_get_with_non_rot_signal(void)
             val->print(PRINT_ERROR, "\tFailed to set boot flag before check\n", 0);
             psa->get(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
             psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
+
             return status;
         }
 

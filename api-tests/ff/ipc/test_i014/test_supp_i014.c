@@ -75,7 +75,9 @@ wait:
         {
             val->print(PRINT_ERROR, "\tFailed to set boot flag before check\n", 0);
             /* Unblock client */
+
             psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
+
             return VAL_STATUS_ERROR;
         }
 
@@ -88,7 +90,9 @@ wait:
         {
             val->print(PRINT_ERROR, "\tFailed to set boot flag after check\n", 0);
         }
+
         psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
+
     }
 
     status = VAL_STATUS_SPM_FAILED;

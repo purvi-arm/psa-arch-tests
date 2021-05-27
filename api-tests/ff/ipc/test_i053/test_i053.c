@@ -34,7 +34,7 @@ const client_test_t test_i053_client_tests_list[] = {
 int32_t client_test_psa_call_with_invalid_outvec_end_addr(caller_security_t caller)
 {
    int32_t                 status = VAL_STATUS_SUCCESS;
-   psa_handle_t            handle = 0;
+
    psa_status_t            status_of_call;
    boot_state_t            boot_state;
    memory_desc_t           *memory_desc_driver, *memory_desc;
@@ -67,12 +67,15 @@ int32_t client_test_psa_call_with_invalid_outvec_end_addr(caller_security_t call
     * VAL APIs to decide test status.
     */
 
+#if STATELESS_ROT != 1
+   psa_handle_t            handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
        val->print(PRINT_ERROR, "\tConnection failed\n", 0);
        return VAL_STATUS_INVALID_HANDLE;
    }
+#endif
 
    /*
     * Selection of invalid size for psa_outvec:
@@ -92,7 +95,9 @@ int32_t client_test_psa_call_with_invalid_outvec_end_addr(caller_security_t call
                                   (uint32_t *)sizeof(memory_desc_t));
    if (val->err_check_set(TEST_CHECKPOINT_NUM(101), status))
    {
+#if STATELESS_ROT != 1
        psa->close(handle);
+#endif
        return status;
    }
 
@@ -107,7 +112,9 @@ int32_t client_test_psa_call_with_invalid_outvec_end_addr(caller_security_t call
                                   (uint32_t *)sizeof(memory_desc_t));
    if (val->err_check_set(TEST_CHECKPOINT_NUM(102), status))
    {
+#if STATELESS_ROT != 1
        psa->close(handle);
+#endif
        return status;
    }
 
@@ -125,8 +132,11 @@ int32_t client_test_psa_call_with_invalid_outvec_end_addr(caller_security_t call
    psa_outvec outvec[1] = {{valid_base, invalid_size}};
 
    /* Test check- psa_call with invalid end_addr for psa_outvec */
+#if STATELESS_ROT == 1
+   status_of_call =  psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, NULL, 0, outvec, 1);
+#else
    status_of_call =  psa->call(handle, PSA_IPC_CALL, NULL, 0, outvec, 1);
-
+#endif
    /*
     * If the caller is in the NSPE, it is IMPLEMENTATION DEFINED whether
     * a PROGRAMMER ERROR will panic or return PSA_ERROR_PROGRAMMER_ERROR.
@@ -134,7 +144,9 @@ int32_t client_test_psa_call_with_invalid_outvec_end_addr(caller_security_t call
     */
    if (caller == CALLER_NONSECURE && status_of_call == PSA_ERROR_PROGRAMMER_ERROR)
    {
+#if STATELESS_ROT != 1
        psa->close(handle);
+#endif
        return VAL_STATUS_SUCCESS;
    }
 
@@ -149,7 +161,10 @@ int32_t client_test_psa_call_with_invalid_outvec_end_addr(caller_security_t call
    }
 
    status = VAL_STATUS_SPM_FAILED;
-   psa->close(handle);
+#if STATELESS_ROT != 1
+       psa->close(handle);
+#endif
+
    (void)(status_of_call);
    return status;
 }

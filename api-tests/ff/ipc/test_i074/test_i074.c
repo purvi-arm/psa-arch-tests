@@ -39,6 +39,8 @@ const client_test_t test_i074_client_tests_list[] = {
 #ifdef SP_HEAP_MEM_SUPP
 static int32_t get_secure_partition_address(addr_t *addr)
 {
+
+#if STATELESS_ROT != 1
    psa_handle_t            handle = 0;
 
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, 1);
@@ -59,6 +61,19 @@ static int32_t get_secure_partition_address(addr_t *addr)
    val->print(PRINT_DEBUG, "\tNSPE: Accessing address 0x%x\n", *addr);
 
    psa->close(handle);
+#else
+   /* Get App-RoT address */
+   psa_outvec outvec[1] = {{addr, BUFFER_SIZE}};
+   if (psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, NULL, 0, outvec, 1) != PSA_SUCCESS)
+   {
+       val->print(PRINT_ERROR, "\tmsg request failed\n", 0);
+       return VAL_STATUS_CALL_FAILED;
+   }
+
+   val->print(PRINT_DEBUG, "\tNSPE: Accessing address 0x%x\n", *addr);
+
+#endif
+
    return VAL_STATUS_SUCCESS;
 }
 
@@ -122,12 +137,15 @@ int32_t client_test_nspe_write_app_rot_heap(caller_security_t caller __UNUSED)
     */
    *(uint8_t *)app_rot_addr = (uint8_t)data;
 
+#if STATELESS_ROT != 1
    /* Handshake with server to decide write status */
    if ((psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION)) > 0)
    {
        val->print(PRINT_ERROR, "\tExpected connection to fail but succeed\n", 0);
        return VAL_STATUS_INVALID_HANDLE;
    }
+#endif
+
    return VAL_STATUS_SUCCESS;
 }
 #else

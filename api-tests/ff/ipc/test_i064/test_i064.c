@@ -33,7 +33,7 @@ const client_test_t test_i064_client_tests_list[] = {
 
 int32_t client_test_psa_eoi_with_non_intr_signal(caller_security_t caller __UNUSED)
 {
-   psa_handle_t           handle;
+
    driver_test_fn_id_t    driver_test_fn_id = TEST_PSA_EOI_WITH_NON_INTR_SIGNAL;
 
    /*
@@ -45,7 +45,11 @@ int32_t client_test_psa_eoi_with_non_intr_signal(caller_security_t caller __UNUS
 
    val->print(PRINT_TEST, "[Check 1] Test psa_eoi with non-interrupt signal\n", 0);
 
+
    /* Connect to DRIVER_TEST_SID */
+
+#if STATELESS_ROT != 1
+   psa_handle_t           handle;
    handle = psa->connect(DRIVER_TEST_SID, DRIVER_TEST_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
@@ -58,6 +62,11 @@ int32_t client_test_psa_eoi_with_non_intr_signal(caller_security_t caller __UNUS
    psa->call(handle, PSA_IPC_CALL, &invec, 1, NULL, 0);
 
    psa->close(handle);
+#else
+   /* Execute driver function related to TEST_PSA_EOI_WITH_NON_INTR_SIGNAL */
+   psa_invec invec = {&driver_test_fn_id, sizeof(driver_test_fn_id)};
+   psa->call(DRIVER_TEST_HANDLE, PSA_IPC_CALL, &invec, 1, NULL, 0);
+#endif
 
    /* The expectation is that driver partition get panic and control never reaches here. */
    return VAL_STATUS_SPM_FAILED;

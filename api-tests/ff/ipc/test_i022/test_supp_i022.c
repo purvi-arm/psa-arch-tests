@@ -33,7 +33,7 @@ const server_test_t test_i022_server_tests_list[] = {
 
 int32_t server_test_psa_reply_with_invalid_handle(void)
 {
-    psa_msg_t   msg = {0};
+	psa_msg_t   msg = {0};
     int32_t     status = VAL_STATUS_SUCCESS;
 
    /*
@@ -58,13 +58,15 @@ int32_t server_test_psa_reply_with_invalid_handle(void)
     * VAL APIs to decide test status.
     */
 
+#if STATELESS_ROT != 1
+
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(201), status))
     {
         psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
         return status;
     }
-
+#endif
     /* Setting boot.state before test check */
     status = val->set_boot_flag(BOOT_EXPECTED_NS);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(202), status))

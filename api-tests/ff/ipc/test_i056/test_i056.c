@@ -35,12 +35,14 @@ int32_t client_test_psa_read_with_not_writable_buffer_addr(caller_security_t cal
 {
    int32_t            status = VAL_STATUS_SUCCESS;
    uint8_t            data = 0x11;
-   psa_handle_t       handle = 0;
+
    psa_status_t       status_of_call;
 
    val->print(PRINT_TEST,
             "[Check 1] Test psa_read with invalid buffer addr\n", 0);
 
+#if STATELESS_ROT != 1
+   psa_handle_t       handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
@@ -50,13 +52,18 @@ int32_t client_test_psa_read_with_not_writable_buffer_addr(caller_security_t cal
 
    psa_invec invec[1] = {{&data, sizeof(data)}};
    status_of_call =  psa->call(handle, PSA_IPC_CALL, invec, 1, NULL, 0);
-
+#else
+   psa_invec invec[1] = {{&data, sizeof(data)}};
+   status_of_call =  psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, invec, 1, NULL, 0);
+#endif
    /* Expectation is server test should hang and control shouldn't have come here */
    val->print(PRINT_ERROR, "\tCall should failed but succeed\n", 0);
 
    status = VAL_STATUS_SPM_FAILED;
 
-   psa->close(handle);
+#if STATELESS_ROT != 1
+       psa->close(handle);
+#endif
    (void)(status_of_call);
    return status;
 }

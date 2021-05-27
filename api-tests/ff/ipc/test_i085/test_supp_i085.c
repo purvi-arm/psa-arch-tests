@@ -40,6 +40,7 @@ static int32_t send_secure_partition_address(addr_t *stack)
     int32_t         status = VAL_STATUS_SUCCESS;
     psa_msg_t       msg = {0};
 
+#if STATELESS_ROT != 1
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(201), status))
     {
@@ -48,6 +49,8 @@ static int32_t send_secure_partition_address(addr_t *stack)
     }
 
     psa->reply(msg.handle, PSA_SUCCESS);
+
+#endif
 
     status = val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(202), status))
@@ -62,12 +65,14 @@ static int32_t send_secure_partition_address(addr_t *stack)
     psa->write(msg.handle, 0, (void *)&stack, sizeof(addr_t));
     psa->reply(msg.handle, PSA_SUCCESS);
 
+#if STATELESS_ROT != 1
     status = val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(203), status))
     {
         return status;
     }
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
     return VAL_STATUS_SUCCESS;
 }
 
@@ -89,12 +94,13 @@ int32_t server_test_sp_write_other_sp_stack(void)
     /* Application RoT stack - local variable */
     uint32_t        l_test_i085 = DATA_VALUE;
     int32_t         status = VAL_STATUS_SUCCESS;
-    psa_msg_t       msg = {0};
+
 
     status = send_secure_partition_address(&l_test_i085);
     if (VAL_ERROR(status))
         return status;
-
+#if STATELESS_ROT != 1
+    psa_msg_t       msg = {0};
     /* Wait for write to get performed by client */
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(204), status))
@@ -105,7 +111,7 @@ int32_t server_test_sp_write_other_sp_stack(void)
 
     /* Connection request is just for handshake, reject connection anyways */
     psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
-
+#endif
     /* Reached here means there could be write succeed or ignored */
     if (l_test_i085 == DATA_VALUE)
         return VAL_STATUS_SUCCESS;

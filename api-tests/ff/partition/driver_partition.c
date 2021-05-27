@@ -334,8 +334,8 @@ int32_t driver_test_psa_eoi_with_unasserted_signal(void)
         return VAL_STATUS_ERROR;
     }
 
-    /* psa_eoi should panic as DRIVER_UART_INTR_SIG is unasserted */
-    psa_eoi(DRIVER_UART_INTR_SIG);
+    /* psa_eoi should panic as DRIVER_UART_INTR_SIG_SIGNAL is unasserted */
+    psa_eoi(DRIVER_UART_INTR_SIG_SIGNAL);
 
     /* Control shouldn't have reached here */
     val_print_sf("\tCheck for psa_eoi(multiple_signals) failed\n", 0);
@@ -352,6 +352,7 @@ int32_t driver_test_psa_eoi_with_unasserted_signal(void)
 
 int32_t driver_test_psa_eoi_with_multiple_signals(void)
 {
+    psa_irq_enable(DRIVER_UART_INTR_SIG_SIGNAL);
     /*
      * To test psa_eoi for multiple signals, one of signal should asserted first.
      * Otherwise, check can false pass with psa_eoi_with_unasserted_signal.
@@ -359,15 +360,15 @@ int32_t driver_test_psa_eoi_with_multiple_signals(void)
      */
     val_generate_interrupt();
 
-    /* Wait for DRIVER_UART_INTR_SIG signal */
-    if (psa_wait(DRIVER_UART_INTR_SIG, PSA_BLOCK) & DRIVER_UART_INTR_SIG)
+    /* Wait for DRIVER_UART_INTR_SIG_SIGNAL signal */
+    if (psa_wait(DRIVER_UART_INTR_SIG_SIGNAL, PSA_BLOCK) & DRIVER_UART_INTR_SIG_SIGNAL)
     {
         /* Received DRIVER_UART_INTR_SIG signal, now process it */
         val_disable_interrupt();
     }
     else
     {
-        /* didn't receive DRIVER_UART_INTR_SIG signal, however process it */
+        /* didn't receive DRIVER_UART_INTR_SIG_SIGNAL signal, however process it */
         val_disable_interrupt();
         val_print_sf("\tFailed to receive irq signal\n", 0);
         return VAL_STATUS_SPM_FAILED;
@@ -381,7 +382,7 @@ int32_t driver_test_psa_eoi_with_multiple_signals(void)
     }
 
     /* psa_eoi should panic as irq_signal is provided with multiple signals */
-    psa_eoi(DRIVER_UART_INTR_SIG|DRIVER_TEST_SIGNAL);
+    psa_eoi(DRIVER_UART_INTR_SIG_SIGNAL|DRIVER_TEST_SIGNAL);
 
     /* Control shouldn't have reached here */
     val_print_sf("\tCheck for psa_eoi(multiple_signals) failed\n", 0);
@@ -399,30 +400,30 @@ int32_t driver_test_psa_eoi_with_multiple_signals(void)
 int32_t driver_test_irq_routing(void)
 {
     psa_signal_t signals = 0;
-
+    psa_irq_enable(DRIVER_UART_INTR_SIG_SIGNAL);
     /* Assert interrupt signal assigned to driver partition */
     val_generate_interrupt();
 
-    /* Wait for DRIVER_UART_INTR_SIG signal */
-    signals = psa_wait(DRIVER_UART_INTR_SIG, PSA_BLOCK);
+    /* Wait for DRIVER_UART_INTR_SIG_SIGNAL signal */
+    signals = psa_wait(DRIVER_UART_INTR_SIG_SIGNAL, PSA_BLOCK);
 
-    if (signals & DRIVER_UART_INTR_SIG)
+    if (signals & DRIVER_UART_INTR_SIG_SIGNAL)
     {
-        /* Received DRIVER_UART_INTR_SIG signal, now process it */
+        /* Received DRIVER_UART_INTR_SIG_SIGNAL signal, now process it */
         val_disable_interrupt();
 
         /* A signal remains active until it is processed by psa_eoi */
-        if ((psa_wait(DRIVER_UART_INTR_SIG, PSA_BLOCK) & DRIVER_UART_INTR_SIG) == 0)
+        if ((psa_wait(DRIVER_UART_INTR_SIG_SIGNAL, PSA_BLOCK) & DRIVER_UART_INTR_SIG_SIGNAL) == 0)
         {
             val_print_sf("\tIrq signal got de-activate before psa_eoi()\n", 0);
             return VAL_STATUS_SPM_FAILED;
         }
 
         /* Perform end of interrupt */
-        psa_eoi(DRIVER_UART_INTR_SIG);
+        psa_eoi(DRIVER_UART_INTR_SIG_SIGNAL);
 
         /* Irq signal should be de-activated now */
-        if (psa_wait(DRIVER_UART_INTR_SIG, PSA_POLL) & DRIVER_UART_INTR_SIG)
+        if (psa_wait(DRIVER_UART_INTR_SIG_SIGNAL, PSA_POLL) & DRIVER_UART_INTR_SIG_SIGNAL)
         {
             val_print_sf("\tIrq signal didn't get de-activate after psa_eoi()\n", 0);
             return VAL_STATUS_SPM_FAILED;
@@ -432,7 +433,7 @@ int32_t driver_test_irq_routing(void)
     }
     else
     {
-        /* didn't receive DRIVER_UART_INTR_SIG signal, however process it */
+        /* didn't receive DRIVER_UART_INTR_SIG_SIGNAL signal, however process it */
         val_disable_interrupt();
         val_print_sf("\tFailed to receive irq signal, signals=0x%x\n", signals);
         return VAL_STATUS_SPM_FAILED;

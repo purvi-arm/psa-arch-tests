@@ -34,7 +34,7 @@ const client_test_t test_i027_client_tests_list[] = {
 int32_t client_test_psa_drop_connection(caller_security_t caller)
 {
    int32_t            status = VAL_STATUS_SUCCESS;
-   psa_handle_t       handle = 0;
+
    psa_status_t       status_of_call;
    boot_state_t       boot_state;
 
@@ -63,12 +63,15 @@ int32_t client_test_psa_drop_connection(caller_security_t caller)
     * VAL APIs to decide test status.
     */
 
+#if STATELESS_ROT != 1
+   psa_handle_t       handle = 0;
    handle = psa->connect(SERVER_CONNECTION_DROP_SID, SERVER_CONNECTION_DROP_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
        val->print(PRINT_ERROR, "\tConnection failed\n", 0);
        return VAL_STATUS_INVALID_HANDLE;
    }
+#endif
 
    /* Setting boot.state before test check */
    boot_state = (caller == CALLER_NONSECURE) ? BOOT_EXPECTED_NS : BOOT_EXPECTED_S;
@@ -78,7 +81,11 @@ int32_t client_test_psa_drop_connection(caller_security_t caller)
        return VAL_STATUS_ERROR;
    }
 
+#if STATELESS_ROT == 1
+   status_of_call =  psa->call(SERVER_CONNECTION_DROP_HANDLE, PSA_IPC_CALL, NULL, 0, NULL, 0);
+#else
    status_of_call =  psa->call(handle, PSA_IPC_CALL, NULL, 0, NULL, 0);
+#endif
 
    /*
     * If the caller is in the NSPE, it is IMPLEMENTATION DEFINED whether
@@ -101,7 +108,12 @@ int32_t client_test_psa_drop_connection(caller_security_t caller)
         * all subsequent calls to psa_call() with the same connection
         * handle will immediately return PSA_ERROR_PROGRAMMER_ERROR.
         */
+
+#if STATELESS_ROT == 1
+       status_of_call =  psa->call(SERVER_CONNECTION_DROP_HANDLE, PSA_IPC_CALL, NULL, 0, NULL, 0);
+#else
        status_of_call =  psa->call(handle, PSA_IPC_CALL, NULL, 0, NULL, 0);
+#endif
        if (status_of_call != PSA_ERROR_PROGRAMMER_ERROR)
        {
            status = VAL_STATUS_SPM_FAILED;
@@ -109,7 +121,9 @@ int32_t client_test_psa_drop_connection(caller_security_t caller)
            "\tCall should have returned PSA_ERROR_PROGRAMMER_ERROR. Status = 0x%x\n",
            status_of_call);
        }
+#if STATELESS_ROT != 1
        psa->close(handle);
+#endif
        return status;
    }
 
@@ -123,6 +137,8 @@ int32_t client_test_psa_drop_connection(caller_security_t caller)
        return VAL_STATUS_ERROR;
    }
 
+#if STATELESS_ROT != 1
    psa->close(handle);
+#endif
    return VAL_STATUS_SPM_FAILED;
 }

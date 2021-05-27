@@ -34,7 +34,7 @@ const client_test_t test_i058_client_tests_list[] = {
 int32_t client_test_psa_doorbell_signal(caller_security_t caller __UNUSED)
 {
    int32_t            status = VAL_STATUS_SUCCESS;
-   psa_handle_t       handle = 0;
+
 #ifndef NONSECURE_TEST_BUILD
    psa_signal_t       signals = 0;
 #endif
@@ -42,12 +42,15 @@ int32_t client_test_psa_doorbell_signal(caller_security_t caller __UNUSED)
    val->print(PRINT_TEST,
             "[Check 1] Test PSA_DOORBELL signal\n", 0);
 
+#if STATELESS_ROT != 1
+   psa_handle_t       handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
        val->print(PRINT_ERROR, "\tConnection failed\n", 0);
        return VAL_STATUS_INVALID_HANDLE;
    }
+#endif
 
 #ifndef NONSECURE_TEST_BUILD
    /* Wait for doorball notification */
@@ -85,6 +88,8 @@ int32_t client_test_psa_doorbell_signal(caller_security_t caller __UNUSED)
    }
 #endif
 
+#if STATELESS_ROT != 1
    psa->close(handle);
+#endif
    return status;
 }

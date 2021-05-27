@@ -24,7 +24,7 @@
 #endif
 
 #include "test_i049.h"
-
+#include "stdio.h"
 const client_test_t test_i049_client_tests_list[] = {
     NULL,
     client_test_psa_call_with_invalid_outvec_pointer,
@@ -34,7 +34,7 @@ const client_test_t test_i049_client_tests_list[] = {
 int32_t client_test_psa_call_with_invalid_outvec_pointer(caller_security_t caller)
 {
    int32_t                 status = VAL_STATUS_SUCCESS;
-   psa_handle_t            handle = 0;
+
    psa_status_t            status_of_call;
    boot_state_t            boot_state;
    memory_desc_t           *memory_desc;
@@ -65,12 +65,15 @@ int32_t client_test_psa_call_with_invalid_outvec_pointer(caller_security_t calle
     * VAL APIs to decide test status.
     */
 
+#if STATELESS_ROT != 1
+   psa_handle_t            handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
        val->print(PRINT_ERROR, "\tConnection failed\n", 0);
        return VAL_STATUS_INVALID_HANDLE;
    }
+#endif
 
    /*
     * Selection of invalid outvec pointer:
@@ -92,7 +95,9 @@ int32_t client_test_psa_call_with_invalid_outvec_pointer(caller_security_t calle
                                   (uint32_t *)sizeof(memory_desc_t));
    if (val->err_check_set(TEST_CHECKPOINT_NUM(101), status))
    {
+#if STATELESS_ROT != 1
        psa->close(handle);
+#endif
        return status;
    }
 
@@ -113,8 +118,11 @@ int32_t client_test_psa_call_with_invalid_outvec_pointer(caller_security_t calle
    }
 
    /* Test check- psa_call with invalid address for outvec */
+#if STATELESS_ROT == 1
+   status_of_call =  psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, NULL, 0, invalid_outvec, 1);
+#else
    status_of_call =  psa->call(handle, PSA_IPC_CALL, NULL, 0, invalid_outvec, 1);
-
+#endif
    /*
     * If the caller is in the NSPE, it is IMPLEMENTATION DEFINED whether
     * a PROGRAMMER ERROR will panic or return PSA_ERROR_PROGRAMMER_ERROR.
@@ -122,7 +130,9 @@ int32_t client_test_psa_call_with_invalid_outvec_pointer(caller_security_t calle
     */
    if (caller == CALLER_NONSECURE && status_of_call == PSA_ERROR_PROGRAMMER_ERROR)
    {
+#if STATELESS_ROT != 1
        psa->close(handle);
+#endif
        return VAL_STATUS_SUCCESS;
    }
 
@@ -137,6 +147,8 @@ int32_t client_test_psa_call_with_invalid_outvec_pointer(caller_security_t calle
    }
 
    status = VAL_STATUS_SPM_FAILED;
-   psa->close(handle);
+#if STATELESS_ROT != 1
+       psa->close(handle);
+#endif
    return status;
 }
