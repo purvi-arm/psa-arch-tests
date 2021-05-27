@@ -58,6 +58,7 @@ int32_t server_test_psa_skip_with_invec_equal_to_max_iovec(void)
     * VAL APIs to decide test status.
     */
 
+#if STATELESS_ROT != 1
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(201), status))
     {
@@ -66,6 +67,7 @@ int32_t server_test_psa_skip_with_invec_equal_to_max_iovec(void)
     }
 
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     status = val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(202), status))
@@ -104,8 +106,10 @@ int32_t server_test_psa_skip_with_invec_equal_to_max_iovec(void)
     }
 
     val->err_check_set(TEST_CHECKPOINT_NUM(204), status);
+#if STATELESS_ROT != 1
     status = ((val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
                ? VAL_STATUS_ERROR : status);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
     return status;
 }

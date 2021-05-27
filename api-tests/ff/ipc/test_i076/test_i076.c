@@ -34,10 +34,12 @@ const client_test_t test_i076_client_tests_list[] = {
     NULL,
 };
 
-static int32_t get_secure_partition_address(psa_handle_t *handle,
+static int32_t get_secure_partition_address(__attribute__((unused)) psa_handle_t *handle,
                                             addr_t *addr,
                                             driver_test_fn_id_t test_fn_id)
 {
+#if STATELESS_ROT != 1
+
    *handle = psa->connect(DRIVER_TEST_SID, DRIVER_TEST_VERSION);
    if (!PSA_HANDLE_IS_VALID(*handle))
    {
@@ -53,8 +55,17 @@ static int32_t get_secure_partition_address(psa_handle_t *handle,
        val->print(PRINT_ERROR, "\tmsg request failed\n", 0);
        return VAL_STATUS_CALL_FAILED;
    }
-
    return VAL_STATUS_SUCCESS;
+#else
+   psa_invec invec[1] = {{&test_fn_id, sizeof(test_fn_id)}};
+   psa_outvec outvec[1] = {{addr, sizeof(addr_t)}};
+   if (psa->call(DRIVER_TEST_HANDLE, PSA_IPC_CALL, invec, 1, outvec, 1) != PSA_SUCCESS)
+   {
+	   val->print(PRINT_ERROR, "\tmsg request failed\n", 0);
+       return VAL_STATUS_CALL_FAILED;
+   }
+   return VAL_STATUS_SUCCESS;
+#endif
 }
 
 static int32_t get_driver_status(psa_handle_t *handle)
@@ -66,7 +77,7 @@ static int32_t get_driver_status(psa_handle_t *handle)
    return VAL_STATUS_SUCCESS;
 }
 
-static void close_driver_fn(psa_handle_t *handle)
+__attribute__((unused)) static void close_driver_fn(psa_handle_t *handle)
 {
    psa->close(*handle);
 }
@@ -84,7 +95,9 @@ int32_t client_test_nspe_read_psa_rot_variable(caller_security_t caller __UNUSED
                                               TEST_ISOLATION_PSA_ROT_DATA_RD)))
        return VAL_STATUS_ERROR;
 
+#if STATELESS_ROT != 1
    close_driver_fn(&handle);
+#endif
 
    /* Setting boot.state before test check */
    if (val->set_boot_flag(BOOT_EXPECTED_REENTER_TEST))
@@ -135,10 +148,15 @@ int32_t client_test_nspe_write_psa_rot_variable(caller_security_t caller __UNUSE
    /* Handshake with driver to decide write status */
    if (VAL_ERROR(get_driver_status(&handle)))
    {
+#if STATELESS_ROT != 1
        close_driver_fn(&handle);
+#endif
        return VAL_STATUS_DRIVER_FN_FAILED;
    }
 
+#if STATELESS_ROT != 1
    close_driver_fn(&handle);
+#endif
+
    return VAL_STATUS_SUCCESS;
 }

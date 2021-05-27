@@ -33,7 +33,7 @@ const client_test_t test_i021_client_tests_list[] = {
 
 int32_t client_test_irq_routing(caller_security_t caller __UNUSED)
 {
-   psa_handle_t           handle;
+
    driver_test_fn_id_t    driver_test_fn_id = TEST_INTR_SERVICE;
 
    /*
@@ -45,6 +45,9 @@ int32_t client_test_irq_routing(caller_security_t caller __UNUSED)
 
    val->print(PRINT_TEST, "[Check 1] Test irq routing\n", 0);
 
+#if STATELESS_ROT != 1
+
+   psa_handle_t           handle;
    /* Connect to DRIVER_TEST_SID */
    handle = psa->connect(DRIVER_TEST_SID, DRIVER_TEST_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
@@ -52,10 +55,18 @@ int32_t client_test_irq_routing(caller_security_t caller __UNUSED)
        val->print(PRINT_ERROR, "\t psa_connect failed. handle=0x%x\n", handle);
        return VAL_STATUS_SPM_FAILED;
    }
+#endif
 
    /* Execute driver function related to TEST_INTR_SERVICE */
    psa_invec invec = {&driver_test_fn_id, sizeof(driver_test_fn_id)};
 
+#if STATELESS_ROT == 1
+   if (psa->call(DRIVER_TEST_HANDLE, PSA_IPC_CALL, &invec, 1, NULL, 0) != PSA_SUCCESS)
+      {
+           return VAL_STATUS_SPM_FAILED;
+      }
+
+#else
    if (psa->call(handle, PSA_IPC_CALL, &invec, 1, NULL, 0) != PSA_SUCCESS)
    {
         psa->close(handle);
@@ -63,5 +74,7 @@ int32_t client_test_irq_routing(caller_security_t caller __UNUSED)
    }
 
    psa->close(handle);
+#endif
+
    return VAL_STATUS_SUCCESS;
 }

@@ -58,7 +58,7 @@ int32_t server_test_psa_read_with_not_writable_buffer_addr(void)
     * after targeted test check. After a reboot, these boot signatures are being read by the
     * VAL APIs to decide test status.
     */
-
+#if STATELESS_ROT != 1
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(201), status))
     {
@@ -68,7 +68,7 @@ int32_t server_test_psa_read_with_not_writable_buffer_addr(void)
 
     /* Accept the connection */
     psa->reply(msg.handle, PSA_SUCCESS);
-
+#endif
     /* Set buffer to point to not writable location (Code memory) */
     buffer = (void *) &server_test_psa_read_with_not_writable_buffer_addr;
 
@@ -89,7 +89,6 @@ int32_t server_test_psa_read_with_not_writable_buffer_addr(void)
         }
         else
         {
-
             /* Test check- psa_read with not writable buffer addr, call should panic */
             psa->read(msg.handle, 0, (void *)buffer, msg.in_size[0]);
 
@@ -109,8 +108,10 @@ int32_t server_test_psa_read_with_not_writable_buffer_addr(void)
     }
 
     val->err_check_set(TEST_CHECKPOINT_NUM(204), status);
+#if STATELESS_ROT != 1
     status = ((val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
                ? VAL_STATUS_ERROR : status);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
     return status;
 }

@@ -33,11 +33,13 @@ const client_test_t test_i047_client_tests_list[] = {
 
 int32_t client_test_psa_get_with_invalid_msg_pointer(caller_security_t caller __UNUSED)
 {
-   psa_handle_t       handle = 0;
 
-   val->print(PRINT_TEST,
+
+	val->print(PRINT_TEST,
             "[Check 1] Test psa_get with invalid msg pointer\n", 0);
 
+#if STATELESS_ROT != 1
+   psa_handle_t       handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (PSA_HANDLE_IS_VALID(handle))
    {
@@ -48,5 +50,9 @@ int32_t client_test_psa_get_with_invalid_msg_pointer(caller_security_t caller __
    val->print(PRINT_ERROR, "\tpsa_connect should failed but succeed\n", 0);
 
    (void)(handle);
+
+#endif
+
    return VAL_STATUS_SPM_FAILED;
+
 }

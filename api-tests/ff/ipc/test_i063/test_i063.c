@@ -33,10 +33,11 @@ const client_test_t test_i063_client_tests_list[] = {
 
 int32_t client_test_psa_wait_signal_mask(caller_security_t caller __UNUSED)
 {
-   psa_handle_t     handle = 0;
+
 
    val->print(PRINT_TEST, "[Check 1] Test psa_wait signal mask\n", 0);
-
+#if STATELESS_ROT != 1
+   psa_handle_t     handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
 
    if (handle != PSA_ERROR_CONNECTION_REFUSED)
@@ -52,6 +53,6 @@ int32_t client_test_psa_wait_signal_mask(caller_security_t caller __UNUSED)
        val->print(PRINT_ERROR, "psa_connect failed -2\n", 0);
        return VAL_STATUS_INVALID_HANDLE;
    }
-
+#endif
    return VAL_STATUS_SUCCESS;
 }

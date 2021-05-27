@@ -33,7 +33,7 @@ const client_test_t test_i065_client_tests_list[] = {
 
 int32_t client_test_psa_eoi_with_unasserted_signal(caller_security_t caller __UNUSED)
 {
-   psa_handle_t           handle;
+
    driver_test_fn_id_t    driver_test_fn_id = TEST_PSA_EOI_WITH_UNASSERTED_SIGNAL;
 
    /*
@@ -44,6 +44,9 @@ int32_t client_test_psa_eoi_with_unasserted_signal(caller_security_t caller __UN
     */
 
    val->print(PRINT_TEST, "[Check 1] Test psa_eoi with multiple signal\n", 0);
+
+#if STATELESS_ROT != 1
+   psa_handle_t           handle;
 
    /* Connect to DRIVER_TEST_SID */
    handle = psa->connect(DRIVER_TEST_SID, DRIVER_TEST_VERSION);
@@ -58,6 +61,11 @@ int32_t client_test_psa_eoi_with_unasserted_signal(caller_security_t caller __UN
    psa->call(handle, PSA_IPC_CALL, &invec, 1, NULL, 0);
 
    psa->close(handle);
+#else
+   /* Execute driver function related to TEST_PSA_EOI_WITH_UNASSERTED_SIGNAL */
+   psa_invec invec = {&driver_test_fn_id, sizeof(driver_test_fn_id)};
+   psa->call(DRIVER_TEST_HANDLE, PSA_IPC_CALL, &invec, 1, NULL, 0);
+#endif
 
    /* The expectation is that driver partition get panic and control never reaches here. */
    return VAL_STATUS_SPM_FAILED;

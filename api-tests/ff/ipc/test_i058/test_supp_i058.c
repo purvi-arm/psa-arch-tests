@@ -36,6 +36,7 @@ int32_t server_test_psa_doorbell_signal(void)
     int32_t                 status = VAL_STATUS_SUCCESS;
     psa_msg_t               msg = {0};
 
+#if STATELESS_ROT != 1
     /* Serve psa_connect */
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(201), status))
@@ -46,6 +47,7 @@ int32_t server_test_psa_doorbell_signal(void)
 
     /* Accept the connection */
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     if (msg.client_id > 0)
     {
@@ -58,11 +60,13 @@ int32_t server_test_psa_doorbell_signal(void)
         val->print(PRINT_ERROR, "Caller is from non-secure\n", 0);
     }
 
+#if STATELESS_ROT != 1
     /* Serve psa_close */
     status = ((val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
                ? VAL_STATUS_ERROR : status);
     val->err_check_set(TEST_CHECKPOINT_NUM(202), status);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     return status;
 }

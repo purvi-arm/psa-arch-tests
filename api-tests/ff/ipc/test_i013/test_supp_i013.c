@@ -66,7 +66,10 @@ int32_t server_test_psa_get_with_more_than_one_signal(void)
             /* Unblock client */
             if (psa->get(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg) != PSA_SUCCESS)
             {
+#if STATELESS_ROT != 1
+
                 val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
+#endif
             }
             psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
             return VAL_STATUS_ERROR;
@@ -81,7 +84,9 @@ int32_t server_test_psa_get_with_more_than_one_signal(void)
         {
             val->print(PRINT_ERROR, "\tFailed to set boot flag after check\n", 0);
         }
+
         psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
+
     }
 
     val->err_check_set(TEST_CHECKPOINT_NUM(203), VAL_STATUS_SPM_FAILED);

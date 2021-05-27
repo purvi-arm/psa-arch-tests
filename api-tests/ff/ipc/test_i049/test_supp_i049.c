@@ -17,6 +17,7 @@
 
 #include "val_client_defs.h"
 #include "val_service_defs.h"
+#include "stdio.h"
 
 #define val CONCAT(val, _server_sp)
 #define psa CONCAT(psa, _server_sp)
@@ -33,7 +34,7 @@ const server_test_t test_i049_server_tests_list[] = {
 
 int32_t server_test_psa_call_with_invalid_outvec_pointer(void)
 {
-    int32_t         status = VAL_STATUS_SUCCESS;
+	int32_t         status = VAL_STATUS_SUCCESS;
     psa_msg_t       msg = {0};
     psa_signal_t    signals;
 

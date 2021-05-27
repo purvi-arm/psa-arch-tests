@@ -32,7 +32,9 @@ const client_test_t test_i003_client_tests_list[] = {
     client_test_zero_length_outvec,
     client_test_call_read_and_skip,
     client_test_call_and_write,
+#if STATELESS_ROT != 1
     client_test_psa_set_rhandle,
+#endif
     client_test_overlapping_vectors,
     NULL,
 };
@@ -40,18 +42,19 @@ const client_test_t test_i003_client_tests_list[] = {
 int32_t client_test_zero_length_invec(caller_security_t caller __UNUSED)
 {
    int32_t              status = VAL_STATUS_SUCCESS;
-   psa_handle_t         handle = 0;
+
    int                  data[4] = {0x11, 0x22};
 
    val->print(PRINT_TEST, "[Check 1] Test zero length invec\n", 0);
-
+#if STATELESS_ROT != 1
+   psa_handle_t         handle = 0;
    if (val->ipc_connect(SERVER_UNSPECIFED_VERSION_SID,
                         SERVER_UNSPECIFED_VERSION_VERSION,
                         &handle))
    {
        return VAL_STATUS_CONNECTION_FAILED;
    }
-
+#endif
    /* Invec 0 as zero length vector
     * Invec 1 as NULL
     * Invec 2 as valid msg pointer which is not zero length memory pointer
@@ -64,9 +67,11 @@ int32_t client_test_zero_length_invec(caller_security_t caller __UNUSED)
     * Outvec 1 to 3 are NULL
     */
    psa_outvec resp[1] = {{&data[2], sizeof(data[2])}};
-
+#if STATELESS_ROT == 1
+   status = psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, data1, 3, resp, 1);
+#else
    status = psa->call(handle, PSA_IPC_CALL, data1, 3, resp, 1);
-
+#endif
    if (status < 0)
    {
        status = VAL_STATUS_CALL_FAILED;
@@ -88,26 +93,28 @@ int32_t client_test_zero_length_invec(caller_security_t caller __UNUSED)
    {
        val->print(PRINT_ERROR, "\tpsa_call failed. status=%x\n", status);
    }
-
+#if STATELESS_ROT != 1
    val->ipc_close(handle);
+#endif
    return status;
 }
 
 int32_t client_test_zero_length_outvec(caller_security_t caller __UNUSED)
 {
    int32_t              status = VAL_STATUS_SUCCESS;
-   psa_handle_t         handle = 0;
+
    int                  data[4] = {0x11};
 
    val->print(PRINT_TEST, "[Check 2] Test zero length outvec\n", 0);
-
+#if STATELESS_ROT != 1
+   psa_handle_t         handle = 0;
    if (val->ipc_connect(SERVER_UNSPECIFED_VERSION_SID,
                         SERVER_UNSPECIFED_VERSION_VERSION,
                         &handle))
    {
        return VAL_STATUS_CONNECTION_FAILED;
    }
-
+#endif
    /* Test invec 1 to 3 are NULL
     * Invec 1 should be ignored since in_len is 1
     */
@@ -121,8 +128,12 @@ int32_t client_test_zero_length_outvec(caller_security_t caller __UNUSED)
    psa_outvec resp[3] = {{&data[0], 0},
                          {NULL, 0},
                          {&data[2], sizeof(data[2])}};
-
+#if STATELESS_ROT == 1
+   status = psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, data1, 1, resp, 3);
+#else
    status = psa->call(handle, PSA_IPC_CALL, data1, 1, resp, 3);
+#endif
+
    if (status < 0)
    {
        status = VAL_STATUS_CALL_FAILED;
@@ -146,8 +157,10 @@ int32_t client_test_zero_length_outvec(caller_security_t caller __UNUSED)
    {
        val->print(PRINT_ERROR, "\tpsa_call failed. status=%x\n", status);
    }
-
+#if STATELESS_ROT != 1
    val->ipc_close(handle);
+#endif
+
    return status;
 }
 
@@ -157,16 +170,19 @@ int32_t client_test_call_read_and_skip(caller_security_t caller __UNUSED)
    int                  data1[2] = {0xaa, 0xbb};
    uint64_t             data2 = 0x1122334455667788;
    uint64_t             data3 = 0x1020304050607080;
-   psa_handle_t         handle = 0;
+
 
    val->print(PRINT_TEST, "[Check 3] Test psa_call, psa_read and psa_skip\n", 0);
 
+#if STATELESS_ROT != 1
+   psa_handle_t         handle = 0;
    if (val->ipc_connect(SERVER_UNSPECIFED_VERSION_SID,
                         SERVER_UNSPECIFED_VERSION_VERSION,
                         &handle))
    {
        return VAL_STATUS_CONNECTION_FAILED;
    }
+#endif
 
    /* Server test func checks the following:
     * All iovec as input, out_len=0, inbound read, inbound skip,
@@ -177,14 +193,22 @@ int32_t client_test_call_read_and_skip(caller_security_t caller __UNUSED)
                         {&data2, sizeof(data2)},
                         {&data3, sizeof(data3)}};
 
+#if STATELESS_ROT == 1
+   status = psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, data, 4, NULL, 0);
+#else
    status = psa->call(handle, PSA_IPC_CALL, data, 4, NULL, 0);
+#endif
+
    if (status < 0)
    {
        val->print(PRINT_ERROR, "\tpsa_call failed. status=%x\n",status);
        status = VAL_STATUS_CALL_FAILED;
    }
 
+#if STATELESS_ROT != 1
    val->ipc_close(handle);
+#endif
+
    return status;
 }
 
@@ -196,16 +220,19 @@ int32_t client_test_call_and_write(caller_security_t caller __UNUSED)
                                            sizeof(expected_data[1]),
                                            sizeof(expected_data[2]),
                                            2};
-   psa_handle_t         handle = 0;
+
 
    val->print(PRINT_TEST, "[Check 4] Test psa_call and psa_write\n", 0);
 
+#if STATELESS_ROT != 1
+   psa_handle_t         handle = 0;
    if (val->ipc_connect(SERVER_UNSPECIFED_VERSION_SID,
                         SERVER_UNSPECIFED_VERSION_VERSION,
                         &handle))
    {
        return VAL_STATUS_CONNECTION_FAILED;
    }
+#endif
 
    /* Check all iovec as output */
    /* Check for in_len=0 */
@@ -216,7 +243,12 @@ int32_t client_test_call_and_write(caller_security_t caller __UNUSED)
                          {&data[2], sizeof(data[2])},
                          {&data[3], sizeof(data[3])}};
 
+#if STATELESS_ROT == 1
+   status = psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, NULL, 0, resp, 4);
+#else
    status = psa->call(handle, PSA_IPC_CALL, NULL, 0, resp, 4);
+#endif
+
    if (status < 0)
    {
        status = VAL_STATUS_CALL_FAILED;
@@ -246,7 +278,10 @@ int32_t client_test_call_and_write(caller_security_t caller __UNUSED)
        val->print(PRINT_ERROR, "\tpsa_call failed. status=%x\n", status);
    }
 
+#if STATELESS_ROT != 1
    val->ipc_close(handle);
+#endif
+
    return status;
 }
 
@@ -289,17 +324,20 @@ int32_t client_test_psa_set_rhandle(caller_security_t caller __UNUSED)
 int32_t client_test_overlapping_vectors(caller_security_t caller __UNUSED)
 {
    int32_t            status = VAL_STATUS_SUCCESS;
-   psa_handle_t       handle = 0;
+
    uint8_t            data = 0x11, expected_data[] = {0x22, 0x33};
 
    val->print(PRINT_TEST, "[Check 6] Test overlapping vectors\n", 0);
 
+#if STATELESS_ROT != 1
+   psa_handle_t       handle = 0;
    if (val->ipc_connect(SERVER_UNSPECIFED_VERSION_SID,
                         SERVER_UNSPECIFED_VERSION_VERSION,
                         &handle))
    {
        return VAL_STATUS_CONNECTION_FAILED;
    }
+#endif
 
    /* Rule- When client provides an input and output vectors which are referencing
     * to same memory location, psa_read after psa_write to that memory location
@@ -317,7 +355,11 @@ int32_t client_test_overlapping_vectors(caller_security_t caller __UNUSED)
    psa_outvec outvec[2] = {{&data, sizeof(data)},
                            {&data, sizeof(data)}};
 
+#if STATELESS_ROT == 1
+   status = psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, invec, 1, outvec, 2);
+#else
    status = psa->call(handle, PSA_IPC_CALL, invec, 1, outvec, 2);
+#endif
 
    if (status < 0)
    {
@@ -335,6 +377,9 @@ int32_t client_test_overlapping_vectors(caller_security_t caller __UNUSED)
        val->print(PRINT_ERROR, "\tpsa_call failed. status=%x\n", status);
    }
 
+#if STATELESS_ROT != 1
    val->ipc_close(handle);
+#endif
+
    return status;
 }

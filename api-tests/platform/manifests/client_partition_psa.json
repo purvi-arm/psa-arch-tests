@@ -1,18 +1,23 @@
 {
-  "psa_framework_version": 1.0,
+  "psa_framework_version": 1.1,
   "name": "CLIENT_PARTITION",
   "type": "APPLICATION-ROT",
+  "model": "IPC",
   "priority": "NORMAL",
   "description": "Client partition executing client test func from SPE",
   "entry_point": "client_main",
   "stack_size": "0x400",
-  "services": [{
+  "services": [
+    {
       "name": "CLIENT_TEST_DISPATCHER",
       "sid": "0x0000FA01",
       "non_secure_clients": true,
       "version": 1,
-      "version_policy": "RELAXED"
+      "version_policy": "RELAXED",
+      "connection_based": false,
+      "stateless_handle": "auto"
     }
+    
   ],
   "dependencies": [
     "DRIVER_UART",

@@ -112,7 +112,10 @@ int32_t server_test_psa_get_with_invalid_msg_pointer(void)
         val->print(PRINT_ERROR, "\tFailed to set boot flag after check\n", 0);
     }
 
+#if STATELESS_ROT != 1
     /* Reject the connection */
     psa->reply(invalid_msg->handle, PSA_ERROR_CONNECTION_REFUSED);
+#endif
+
     return VAL_STATUS_SPM_FAILED;
 }

@@ -41,6 +41,8 @@ static int32_t get_secure_partition_address(psa_handle_t *handle,
                                             addr_t *addr,
                                             driver_test_fn_id_t test_fn_id)
 {
+#if STATELESS_ROT != 1
+
    *handle = psa->connect(DRIVER_TEST_SID, DRIVER_TEST_VERSION);
    if (!PSA_HANDLE_IS_VALID(*handle))
    {
@@ -58,6 +60,18 @@ static int32_t get_secure_partition_address(psa_handle_t *handle,
    }
 
    return VAL_STATUS_SUCCESS;
+#else
+   /* Execute driver function related to TEST_ISOLATION_PSA_ROT_DATA_RD */
+      psa_invec invec[1] = {{&test_fn_id, sizeof(test_fn_id)}};
+      psa_outvec outvec[1] = {{addr, sizeof(addr_t)}};
+      if (psa->call(DRIVER_TEST_HANDLE, PSA_IPC_CALL, invec, 1, outvec, 1) != PSA_SUCCESS)
+      {
+          val->print(PRINT_ERROR, "\tmsg request failed\n", 0);
+          return VAL_STATUS_CALL_FAILED;
+      }
+
+      return VAL_STATUS_SUCCESS;
+#endif
 }
 
 static int32_t get_driver_status(psa_handle_t *handle)
@@ -87,7 +101,9 @@ int32_t client_test_app_rot_read_psa_rot_heap(caller_security_t caller __UNUSED)
                                               TEST_ISOLATION_PSA_ROT_HEAP_RD)))
        return VAL_STATUS_ERROR;
 
-   close_driver_fn(&handle);
+#if STATELESS_ROT != 1
+       close_driver_fn(&handle);
+#endif
 
    /* Setting boot.state before test check */
    if (val->set_boot_flag(BOOT_EXPECTED_REENTER_TEST))
@@ -138,11 +154,15 @@ int32_t client_test_app_rot_write_psa_rot_heap(caller_security_t caller __UNUSED
    /* Handshake with driver to decide write status */
    if (VAL_ERROR(get_driver_status(&handle)))
    {
+#if STATELESS_ROT != 1
        close_driver_fn(&handle);
+#endif
        return VAL_STATUS_DRIVER_FN_FAILED;
    }
 
-   close_driver_fn(&handle);
+#if STATELESS_ROT != 1
+       close_driver_fn(&handle);
+#endif
    return VAL_STATUS_SUCCESS;
 }
 #else

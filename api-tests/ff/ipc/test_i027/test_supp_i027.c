@@ -36,6 +36,7 @@ int32_t server_test_psa_drop_connection(void)
     int32_t         status = VAL_STATUS_SUCCESS;
     psa_msg_t       msg = {0};
 
+#if STATELESS_ROT != 1
     status = val->process_connect_request(SERVER_CONNECTION_DROP_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(201), status))
     {
@@ -44,6 +45,7 @@ int32_t server_test_psa_drop_connection(void)
     }
 
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     status = val->process_call_request(SERVER_CONNECTION_DROP_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(202), status))
@@ -62,11 +64,13 @@ exit:
      * directly after receipt of the PSA_ERROR_PROGRAMMER_ERROR completion to allow
      * connection resources within the RoT Service to be released
      */
+#if STATELESS_ROT != 1
     status = val->process_disconnect_request(SERVER_CONNECTION_DROP_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(203), status))
     {
         val->print(PRINT_ERROR, "\tDisconnect request failed\n", 0);
     }
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
     return status;
 }

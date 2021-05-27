@@ -59,14 +59,14 @@ int32_t server_test_psa_write_with_invalid_buffer_addr(void)
     * after targeted test check. After a reboot, these boot signatures are being read by the
     * VAL APIs to decide test status.
     */
-
+#if STATELESS_ROT != 1
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(201), status))
     {
         psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
         return status;
     }
-
+#endif
     /*
      * Selection of invalid buffer addr:
      *
@@ -91,9 +91,10 @@ int32_t server_test_psa_write_with_invalid_buffer_addr(void)
         buffer = (void *) memory_desc->start;
     }
 
+#if STATELESS_ROT != 1
     /* Accept the connection */
     psa->reply(msg.handle, PSA_SUCCESS);
-
+#endif
     /* Server psa_call */
     status = val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(203), status))
@@ -130,8 +131,10 @@ int32_t server_test_psa_write_with_invalid_buffer_addr(void)
     }
 
     val->err_check_set(TEST_CHECKPOINT_NUM(205), status);
+#if STATELESS_ROT != 1
     status = ((val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
                ? VAL_STATUS_ERROR : status);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
     return status;
 }

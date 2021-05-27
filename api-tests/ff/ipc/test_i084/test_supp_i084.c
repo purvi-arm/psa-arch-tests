@@ -44,6 +44,7 @@ static int32_t send_secure_partition_address(void)
     volatile uint32_t *addr = &g_test_i084;
     psa_msg_t         msg = {0};
 
+#if STATELESS_ROT != 1
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(201), status))
     {
@@ -52,6 +53,7 @@ static int32_t send_secure_partition_address(void)
     }
 
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     status = val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(202), status))
@@ -66,12 +68,14 @@ static int32_t send_secure_partition_address(void)
     psa->write(msg.handle, 0, (void *)&addr, sizeof(addr));
     psa->reply(msg.handle, PSA_SUCCESS);
 
+#if STATELESS_ROT != 1
     status = val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(203), status))
     {
         return status;
     }
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
     return VAL_STATUS_SUCCESS;
 }
 
@@ -83,12 +87,14 @@ int32_t server_test_sp_read_other_sp_variable(void)
 int32_t server_test_sp_write_other_sp_variable(void)
 {
     int32_t         status = VAL_STATUS_SUCCESS;
-    psa_msg_t       msg = {0};
+
 
     status = send_secure_partition_address();
     if (VAL_ERROR(status))
         return status;
 
+#if STATELESS_ROT != 1
+    psa_msg_t       msg = {0};
     /* Wait for write to get performed by client */
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(204), status))
@@ -99,7 +105,7 @@ int32_t server_test_sp_write_other_sp_variable(void)
 
     /* Connection request is just for handshake, reject connection anyways */
     psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
-
+#endif
     /* Reached here means there could be write succeed or ignored */
     if (g_test_i084 == DATA_VALUE)
         return VAL_STATUS_SUCCESS;

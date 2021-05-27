@@ -36,7 +36,9 @@ const server_test_t test_i003_server_tests_list[] = {
     server_test_zero_length_outvec,
     server_test_call_read_and_skip,
     server_test_call_and_write,
+#if STATELESS_ROT != 1
     server_test_psa_set_rhandle,
+#endif
     server_test_overlapping_vectors,
     NULL,
 };
@@ -44,7 +46,9 @@ const server_test_t test_i003_server_tests_list[] = {
 static void exit_graceful(psa_handle_t msg_handle, int status_code,
                 int print_next_args, int expected_data, int actual_data)
 {
+#if STATELESS_ROT != 1
     psa_msg_t  msg={0};
+#endif
 
     if (print_next_args != 0)
     {
@@ -56,11 +60,13 @@ static void exit_graceful(psa_handle_t msg_handle, int status_code,
      */
     psa->reply(msg_handle, status_code);
 
+#if STATELESS_ROT != 1
     if (val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
     {
         val->print(PRINT_ERROR, "\tdisconnect failed in exit_graceful func\n", 0);
     }
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 }
 
 int32_t server_test_zero_length_invec(void)
@@ -69,12 +75,14 @@ int32_t server_test_zero_length_invec(void)
     psa_msg_t            msg = {0};
     int                  data[5] = {0}, actual_data = 0x22;
 
+#if STATELESS_ROT != 1
     if (val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
     {
         psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
         return VAL_STATUS_CONNECTION_FAILED;
     }
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     if (val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
     {
@@ -116,8 +124,11 @@ int32_t server_test_zero_length_invec(void)
     psa->write(msg.handle, 0, &data[2], msg.out_size[0]);
     psa->reply(msg.handle, PSA_SUCCESS);
 
+#if STATELESS_ROT != 1
     status = val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
+
     return status;
 }
 
@@ -127,12 +138,14 @@ int32_t server_test_zero_length_outvec(void)
     psa_msg_t            msg={0};
     int                  data[5] ={0}, actual_data=0x11;
 
+#if STATELESS_ROT != 1
     if (val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
     {
         psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
         return VAL_STATUS_CONNECTION_FAILED;
     }
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     if (val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
     {
@@ -176,8 +189,11 @@ int32_t server_test_zero_length_outvec(void)
     psa->write(msg.handle, 2, &data[0], msg.out_size[0]);
     psa->reply(msg.handle, PSA_SUCCESS);
 
+#if STATELESS_ROT != 1
     status = val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
+
     return status;
 }
 
@@ -189,12 +205,14 @@ int32_t server_test_call_read_and_skip(void)
                 actual_data[4] = {0}, i;
     psa_msg_t   msg = {0};
 
+#if STATELESS_ROT != 1
     if (val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
     {
         psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
         return VAL_STATUS_CONNECTION_FAILED;
     }
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     if (val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
     {
@@ -332,8 +350,11 @@ int32_t server_test_call_read_and_skip(void)
     }
     psa->reply(msg.handle, PSA_SUCCESS);
 
+#if STATELESS_ROT != 1
     status = val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
+
     return status;
 }
 
@@ -343,12 +364,14 @@ int32_t server_test_call_and_write(void)
     int          data[5] = {0xaa, 0xbb, 0xcc, 0xdd, 0xee}, i;
     psa_msg_t    msg = {0};
 
+#if STATELESS_ROT != 1
     if (val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
     {
         psa->reply(msg.handle, PSA_ERROR_CONNECTION_REFUSED);
         return VAL_STATUS_CONNECTION_FAILED;
     }
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     if (val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
     {
@@ -391,8 +414,11 @@ int32_t server_test_call_and_write(void)
 
     psa->reply(msg.handle, PSA_SUCCESS);
 
+#if STATELESS_ROT != 1
     status = val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
+
     return status;
 }
 
@@ -490,6 +516,7 @@ int32_t server_test_overlapping_vectors(void)
                   rd_data[] = {0x0, 0x0},
                   expected_data[] = {0x11, 0x22};
 
+#if STATELESS_ROT != 1
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(207), status))
     {
@@ -497,6 +524,7 @@ int32_t server_test_overlapping_vectors(void)
         return status;
     }
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
 
     status = val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(208), status))
@@ -521,8 +549,11 @@ int32_t server_test_overlapping_vectors(void)
     psa->write(msg.handle, 1, &wr_data[1], 1);
     psa->reply(msg.handle, PSA_SUCCESS);
 
+#if STATELESS_ROT != 1
     status = val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     val->err_check_set(TEST_CHECKPOINT_NUM(209), status);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
+
     return status;
 }
