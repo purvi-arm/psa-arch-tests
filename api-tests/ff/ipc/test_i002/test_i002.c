@@ -27,15 +27,17 @@
 
 const client_test_t test_i002_client_tests_list[] = {
     NULL,
+#if STATELESS_ROT != 1
     client_test_connection_busy_and_reject,
     client_test_accept_and_close_connect,
     client_test_connect_with_allowed_version_policy,
+	client_test_spm_concurrent_connect_limit,
+	client_test_psa_block_behave,
+	client_test_psa_poll_behave,
+#endif
     client_test_psa_call_with_allowed_status_code,
     client_test_psa_call_with_allowed_type_values,
     client_test_identity,
-    client_test_spm_concurrent_connect_limit,
-    client_test_psa_block_behave,
-    client_test_psa_poll_behave,
     NULL,
 };
 
@@ -137,9 +139,13 @@ int32_t client_test_connect_with_allowed_version_policy(caller_security_t caller
 int32_t psa_call_with_null_msg(int32_t expected_status)
 {
    int32_t            status = VAL_STATUS_SUCCESS;
-   psa_handle_t       handle = 0;
+
    psa_status_t       status_of_call;
 
+#if STATELESS_ROT == 1
+   status_of_call =  psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, NULL, 0, NULL, 0);
+#else
+   psa_handle_t       handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
@@ -147,6 +153,7 @@ int32_t psa_call_with_null_msg(int32_t expected_status)
    }
 
    status_of_call =  psa->call(handle, PSA_IPC_CALL, NULL, 0, NULL, 0);
+#endif
 
    /* Compare status code returned with expected status code */
    if (status_of_call != expected_status)
@@ -154,7 +161,10 @@ int32_t psa_call_with_null_msg(int32_t expected_status)
        status = VAL_STATUS_CALL_FAILED;
    }
 
+#if STATELESS_ROT != 1
    psa->close(handle);
+#endif
+
    return status;
 }
 
@@ -188,6 +198,20 @@ int32_t client_test_psa_call_with_allowed_type_values(caller_security_t caller _
    uint32_t           i = 0;
 
    val->print(PRINT_TEST, "[Check 5] Test psa_call with different type values\n", 0);
+
+#if STATELESS_ROT == 1
+	for (i = 0; i < (sizeof(type) / sizeof(type[0])); i++)
+	{
+		/* Send type = type[i] */
+		if (psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, type[i], NULL, 0, NULL, 0) != PSA_SUCCESS)
+		{
+			val->print(PRINT_ERROR, "\tCheck failed for type=%d\n", type[i]);
+			status = VAL_STATUS_CALL_FAILED;
+			break;
+		}
+	}
+#else
+   psa_handle_t       handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
@@ -206,29 +230,40 @@ int32_t client_test_psa_call_with_allowed_type_values(caller_security_t caller _
    }
 
    psa->close(handle);
+
+#endif
    return status;
 }
 
 int32_t client_test_identity(caller_security_t caller)
 {
    int32_t         status = VAL_STATUS_SUCCESS;
-   psa_handle_t    handle = 0;
+
    psa_status_t    status_of_call;
    int             id_at_connect = 0, id_at_call = 0;
 
    val->print(PRINT_TEST, "[Check 6] Test client_id\n", 0);
+#if STATELESS_ROT == 1
+   psa_outvec resp[2] = {{&id_at_connect, sizeof(id_at_call)},
+                               {&id_at_call, sizeof(id_at_call)}};
 
+   status_of_call =  psa->call(SERVER_UNSPECIFED_VERSION_HANDLE, PSA_IPC_CALL, NULL, 0, resp, 2);
+#else
+   psa_handle_t    handle = 0;
    handle = psa->connect(SERVER_UNSPECIFED_VERSION_SID, SERVER_UNSPECIFED_VERSION_VERSION);
    if (!PSA_HANDLE_IS_VALID(handle))
    {
        return(VAL_STATUS_INVALID_HANDLE);
    }
 
+
    psa_outvec resp[2] = {{&id_at_connect, sizeof(id_at_call)},
                          {&id_at_call, sizeof(id_at_call)}};
 
    status_of_call =  psa->call(handle, PSA_IPC_CALL, NULL, 0, resp, 2);
 
+
+#endif
 
    if (status_of_call != PSA_SUCCESS)
    {
@@ -246,7 +281,10 @@ int32_t client_test_identity(caller_security_t caller)
    {
        status = VAL_STATUS_WRONG_IDENTITY;
    }
+
+#if STATELESS_ROT != 1
    psa->close(handle);
+#endif
 
    return status;
 }

@@ -37,15 +37,18 @@ int32_t server_test_psa_poll_behave(void);
 
 const server_test_t test_i002_server_tests_list[] = {
     NULL,
+#if STATELESS_ROT != 1
     server_test_connection_busy_and_reject,
     server_test_accept_and_close_connect,
     server_test_connect_with_allowed_version_policy,
-    server_test_psa_call_with_allowed_status_code,
+	server_test_spm_concurrent_connect_limit,
+	server_test_psa_block_behave,
+	server_test_psa_poll_behave,
+#endif
+	server_test_psa_call_with_allowed_status_code,
     server_test_psa_call_with_allowed_type_values,
     server_test_identity,
-    server_test_spm_concurrent_connect_limit,
-    server_test_psa_block_behave,
-    server_test_psa_poll_behave,
+
     NULL,
 };
 
@@ -152,6 +155,7 @@ int32_t server_test_psa_call_with_allowed_status_code(void)
 
     for (i = 0; i < (sizeof(status_code)/sizeof(status_code[0])); i++)
     {
+#if STATELESS_ROT != 1
         status = ((val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
                                         ? VAL_STATUS_ERROR : status);
         if (val->err_check_set(TEST_CHECKPOINT_NUM(208), status))
@@ -160,7 +164,7 @@ int32_t server_test_psa_call_with_allowed_status_code(void)
             return status;
         }
         psa->reply(msg.handle, PSA_SUCCESS);
-
+#endif
         status = val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
         if (val->err_check_set(TEST_CHECKPOINT_NUM(209), status))
         {
@@ -175,9 +179,11 @@ int32_t server_test_psa_call_with_allowed_status_code(void)
             psa->reply(msg.handle, status_code[i]);
         }
 
+#if STATELESS_ROT != 1
         status = ((val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
                                         ? VAL_STATUS_ERROR : status);
         psa->reply(msg.handle, PSA_SUCCESS);
+#endif
         val->err_check_set(TEST_CHECKPOINT_NUM(210), status);
     }
     return status;
@@ -190,6 +196,7 @@ int32_t server_test_psa_call_with_allowed_type_values(void)
     int16_t         type[] = {PSA_IPC_CALL, 1, 2, INT16_MAX};
     uint32_t        i = 0;
 
+#if STATELESS_ROT != 1
     status = ((val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
                                     ? VAL_STATUS_ERROR : status);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(211), status))
@@ -198,7 +205,7 @@ int32_t server_test_psa_call_with_allowed_type_values(void)
         return status;
     }
     psa->reply(msg.handle, PSA_SUCCESS);
-
+#endif
     for (i = 0; i < (sizeof(type)/sizeof(type[0])); i++)
     {
         status = val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
@@ -220,9 +227,11 @@ int32_t server_test_psa_call_with_allowed_type_values(void)
         }
     }
 
+#if STATELESS_ROT != 1
     status = ((val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg))
                                     ? VAL_STATUS_ERROR : status);
     psa->reply(msg.handle, PSA_SUCCESS);
+#endif
     val->err_check_set(TEST_CHECKPOINT_NUM(213), status);
     return status;
 }
@@ -233,6 +242,7 @@ int32_t server_test_identity(void)
     psa_msg_t   msg = {0};
     int         id_at_connect = 0, id_at_call = 0;
 
+#if STATELESS_ROT != 1
     status = val->process_connect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
 
     if (val->err_check_set(TEST_CHECKPOINT_NUM(214), status))
@@ -244,7 +254,7 @@ int32_t server_test_identity(void)
     /* Client ID during connect */
     id_at_connect = msg.client_id;
     psa->reply(msg.handle, PSA_SUCCESS);
-
+#endif
     status = val->process_call_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     if (val->err_check_set(TEST_CHECKPOINT_NUM(215), status))
     {
@@ -259,6 +269,7 @@ int32_t server_test_identity(void)
         psa->reply(msg.handle, PSA_SUCCESS);
     }
 
+#if STATELESS_ROT != 1
     status = val->process_disconnect_request(SERVER_UNSPECIFED_VERSION_SIGNAL, &msg);
     val->err_check_set(TEST_CHECKPOINT_NUM(216), status);
     /* Client ID during disconnect. It should be equal to id_at_call */
@@ -267,7 +278,7 @@ int32_t server_test_identity(void)
         val->print(PRINT_ERROR, "\tmsg.client_id failed for IPC_DISCONNECT", 0);
         status = VAL_STATUS_WRONG_IDENTITY;
     }
-
+#endif
     /* A Partition must have an alphanumeric name for source code to directly refer
      * to a specific Partition. The Secure Partition ID can be referenced in
      * Secure Partition source code via the symbolic name specified as name attribute.

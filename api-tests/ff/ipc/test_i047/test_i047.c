@@ -50,6 +50,8 @@ int32_t client_test_psa_get_with_invalid_msg_pointer(caller_security_t caller __
    val->print(PRINT_ERROR, "\tpsa_connect should failed but succeed\n", 0);
 
    (void)(handle);
+
+
    return VAL_STATUS_SPM_FAILED;
 
 #else
